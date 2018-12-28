@@ -1,0 +1,10 @@
+[package]
+name = "en-300-468-reader"
+version = "0.1.0"
+authors = ["David Holroyd <dave@badgers-in-foil.co.uk>"]
+description = "Reader for MPEG TS data formatted according to ETSI standard EN 300 486"
+
+[dependencies]
+mpeg2ts-reader = "0.8"
+encoding = "0.2"
+log = "0.4"
