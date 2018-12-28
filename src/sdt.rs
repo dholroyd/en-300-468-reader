@@ -222,7 +222,7 @@ impl<'buf> fmt::Debug for Service<'buf> {
     }
 }
 
-pub struct ServiceIterator<'buf> {
+struct ServiceIterator<'buf> {
     remaining_data: &'buf [u8],
 }
 impl<'buf> ServiceIterator<'buf> {
@@ -273,7 +273,7 @@ impl<'buf> SdtSection<'buf> {
     pub fn original_network_id(&self) -> u16 {
         u16::from(self.data[0]) << 8 | u16::from(self.data[1])
     }
-    pub fn services(&self) -> ServiceIterator {
+    pub fn services(&self) -> impl Iterator<Item = Service> {
         ServiceIterator::new(&self.data[3..])
     }
 }
