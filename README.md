@@ -1,6 +1,9 @@
 # en-300-486-reader
 
-Reader for DVB MPEG Transport Stream data formatted according to [ETSI standard EN 300 486](http://www.etsi.org/deliver/etsi_en/300400_300499/300468/01.15.01_60/en_300468v011501p.pdf).
+Reader for DVB MPEG Transport Stream data formatted according to [ETSI standard EN 300 486](http://www.etsi.org/deliver/etsi_en/300400_300499/300468/01.15.01_60/en_300468v011501p.pdf),
+"_Service Information in DVB systems_".
+
+Based on the [`mpeg2ts-reader` crate](https://crates.io/crates/mpeg2ts-reader).
 
 # Supported syntax
 
@@ -9,7 +12,7 @@ Reader for DVB MPEG Transport Stream data formatted according to [ETSI standard 
  - Service Information table sections
    - [ ] NIT `network_information_section()`
    - [ ] BAT `bouquet_association_section()`
-   - [ ] SDT `service_description_section()`
+   - [x] SDT `service_description_section()`
    - [ ] EIT `event_information_section()`
    - [ ] TDT `time_date_section()`
    - [ ] TOT `time_offset_section()`
