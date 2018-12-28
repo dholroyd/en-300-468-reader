@@ -245,11 +245,3 @@ impl<'buf> fmt::Debug for Text<'buf> {
         fmt::Debug::fmt(&self.to_string(encoding::DecoderTrap::Replace), f)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
