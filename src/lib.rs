@@ -1,3 +1,5 @@
+//! Types for reading _Service Information_ from a DVB MPEG Transport Stream, formatted according
+//! to  [ETSI standard EN 300 486](http://www.etsi.org/deliver/etsi_en/300400_300499/300468/01.15.01_60/en_300468v011501p.pdf).
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, future_incompatible)]
 
@@ -11,6 +13,10 @@ use std::borrow::Cow;
 use std::fmt;
 
 mpeg2ts_reader::descriptor_enum! {
+    /// All descriptors supported by this crate.
+    ///
+    /// Future releases of this crate should replace most `UnknownDescriptor` with
+    /// descriptor-specific implementations.
     #[derive(Debug)]
     En300_468Descriptors {
         Reserved 0|1|36..=63 => UnknownDescriptor,
@@ -49,6 +55,7 @@ mpeg2ts_reader::descriptor_enum! {
     }
 }
 
+/// Text encodings as defined by _ETSI EN 300 468_, used by the [`Text type`](struct.Text.html).
 #[derive(Debug)]
 pub enum TextEncoding {
     Reserved1(u8),
@@ -120,12 +127,16 @@ impl<T> ActualOther<T> {
     }
 }
 
+/// A problem encountered by [`Text::to_string()`](struct.Text.html#method.to_string).
 #[derive(Debug)]
 pub enum TextError {
     NotEnoughData { expected: usize, available: usize },
     DecodeFailure(Cow<'static, str>),
     UnsupportedEncoding(TextEncoding),
 }
+
+/// A wrapper around bytes representing text having embedded encoding information, with
+/// functionality for trying to decode this a Rust `String`.
 pub struct Text<'buf> {
     data: &'buf [u8],
 }
