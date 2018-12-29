@@ -1,7 +1,7 @@
+use crate::Text;
 use mpeg2ts_reader::{demultiplex, descriptor, packet, psi};
 use std::fmt;
 use std::marker;
-use Text;
 
 #[derive(Debug)]
 pub enum ServiceType {
@@ -391,14 +391,14 @@ mod test {
     use mpeg2ts_reader::psi::WholeSectionSyntaxPayloadParser;
     use mpeg2ts_reader::{packet, psi};
 
-    packet_filter_switch! {
+    mpeg2ts_reader::packet_filter_switch! {
         NullFilterSwitch<NullDemuxContext> {
             Pat: demultiplex::PatPacketFilter<NullDemuxContext>,
             Pmt: demultiplex::PmtPacketFilter<NullDemuxContext>,
             Nul: demultiplex::NullPacketFilter<NullDemuxContext>,
         }
     }
-    demux_context!(NullDemuxContext, NullStreamConstructor);
+    mpeg2ts_reader::demux_context!(NullDemuxContext, NullStreamConstructor);
     pub struct NullStreamConstructor;
     impl demultiplex::StreamConstructor for NullStreamConstructor {
         type F = NullFilterSwitch;

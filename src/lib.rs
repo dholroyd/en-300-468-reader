@@ -1,18 +1,13 @@
-#[macro_use]
-extern crate mpeg2ts_reader;
-extern crate core;
-extern crate encoding;
-
 pub mod sdt;
 
 use mpeg2ts_reader::descriptor::UnknownDescriptor;
 
+use crate::sdt::ServiceDescriptor;
 use encoding::Encoding;
-use sdt::ServiceDescriptor;
 use std::borrow::Cow;
 use std::fmt;
 
-descriptor_enum! {
+mpeg2ts_reader::descriptor_enum! {
     #[derive(Debug)]
     En300_468Descriptors {
         Reserved 0|1|36...63 => UnknownDescriptor,
