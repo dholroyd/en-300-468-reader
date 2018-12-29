@@ -29,7 +29,7 @@ Based on the [`mpeg2ts-reader` crate](https://crates.io/crates/mpeg2ts-reader).
    - [ ] `VBI_data_descriptor`
    - [ ] `VBI_teletext_descriptor`
    - [ ] `bouquet_name_descriptor`
-   - [ ] `service_descriptor`
+   - [x] `service_descriptor`
    - [ ] `country_availability_descriptor`
    - [ ] `linkage_descriptor`
    - [ ] `NVOD_reference_descriptor`
