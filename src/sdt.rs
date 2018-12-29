@@ -1,3 +1,4 @@
+use crate::ActualOther;
 use crate::Text;
 use mpeg2ts_reader::{demultiplex, descriptor, packet, psi};
 use std::fmt;
@@ -322,7 +323,7 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> demultiplex::PacketFilter
 }
 
 pub trait SdtConsumer {
-    fn consume(&mut self, sect: &SdtSection);
+    fn consume(&mut self, sect: ActualOther<&SdtSection>);
 }
 
 pub struct SdtProcessor<Ctx: demultiplex::DemuxContext, C: SdtConsumer> {
@@ -355,7 +356,8 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayl
         let end = data.len() - 4; // remove CRC bytes
         let sect = SdtSection::new(&data[start..end]);
         match header.table_id {
-            0x42 => self.consumer.consume(&sect),
+            0x42 => self.consumer.consume(ActualOther::Actual(&sect)),
+            0x46 => self.consumer.consume(ActualOther::Other(&sect)),
             _ => log::warn!(
                 "Expected SDT to have table id 0x42, but got {:#x} (original_network_id={})",
                 header.table_id,
@@ -410,7 +412,8 @@ mod test {
 
     struct AssertConsumer;
     impl SdtConsumer for AssertConsumer {
-        fn consume(&mut self, sdt: &SdtSection) {
+        fn consume(&mut self, sdt: ActualOther<&SdtSection>) {
+            let sdt = sdt.actual().unwrap();
             assert_eq!(9018, sdt.original_network_id());
             let mut i = sdt.services();
             let a = i.next().unwrap();

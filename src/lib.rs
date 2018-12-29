@@ -90,6 +90,33 @@ pub enum TextEncoding {
     UTF8,
 }
 
+/// There are several pieces of metadata in the spec that may apply to the 'actual' transport
+/// stream (i.e. the one containing the metadata) or some 'other' transport stream.  This wrapper
+/// allows these cases to be discriminated.
+///
+/// The `Other` variant allows metadata to be announced for services that are actually broadcast
+/// in a different multiplex (on a different frequency), for example.
+pub enum ActualOther<T> {
+    /// The wrapped information pertains to the current transport stream / network.
+    Actual(T),
+    /// The wrapped information pertains to some other transport stream / network.
+    Other(T),
+}
+impl<T> ActualOther<T> {
+    pub fn actual(&self) -> Option<&T> {
+        match self {
+            ActualOther::Actual(ref v) => Some(v),
+            ActualOther::Other(_) => None,
+        }
+    }
+    pub fn other(&self) -> Option<&T> {
+        match self {
+            ActualOther::Actual(_) => None,
+            ActualOther::Other(ref v) => Some(v),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum TextError {
     NotEnoughData { expected: usize, available: usize },
