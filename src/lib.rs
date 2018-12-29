@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms, future_incompatible)]
 
 pub mod sdt;
 
@@ -12,7 +13,7 @@ use std::fmt;
 mpeg2ts_reader::descriptor_enum! {
     #[derive(Debug)]
     En300_468Descriptors {
-        Reserved 0|1|36...63 => UnknownDescriptor,
+        Reserved 0|1|36..=63 => UnknownDescriptor,
         VideoStream 2 => UnknownDescriptor,
         AudioStream 3 => UnknownDescriptor,
         Hierarchy 4 => UnknownDescriptor,
@@ -31,7 +32,7 @@ mpeg2ts_reader::descriptor_enum! {
         STD 17 => UnknownDescriptor,
         IBP 18 => UnknownDescriptor,
         /// ISO IEC 13818-6
-        IsoIec13818dash6 19...26 => UnknownDescriptor,
+        IsoIec13818dash6 19..=26 => UnknownDescriptor,
         MPEG4Video 27 => UnknownDescriptor,
         MPEG4Audio 28 => UnknownDescriptor,
         IOD 29 => UnknownDescriptor,
@@ -41,7 +42,7 @@ mpeg2ts_reader::descriptor_enum! {
         MuxCode 33 => UnknownDescriptor,
         FmxBufferSize 34 => UnknownDescriptor,
         MultiplexBuffer 35 => UnknownDescriptor,
-        UserPrivate 64...71|73...255 => UnknownDescriptor,
+        UserPrivate 64..=71|73..=255 => UnknownDescriptor,
 
         // EN 300 480 specofic descriptors,
         Service ServiceDescriptor::TAG => ServiceDescriptor,
@@ -142,7 +143,7 @@ impl<'buf> Text<'buf> {
     pub fn encoding(&self) -> TextEncoding {
         let id = self.data[0];
         match id {
-            0x20...0xff => TextEncoding::Iso88591,
+            0x20..=0xff => TextEncoding::Iso88591,
             0x01 => TextEncoding::Iso88595,
             0x02 => TextEncoding::Iso88596,
             0x03 => TextEncoding::Iso88597,
@@ -154,7 +155,7 @@ impl<'buf> Text<'buf> {
             0x09 => TextEncoding::Iso885913,
             0x0a => TextEncoding::Iso885914,
             0x0b => TextEncoding::Iso885915,
-            0x0c...0x0f => TextEncoding::Reserved1(id),
+            0x0c..=0x0f => TextEncoding::Reserved1(id),
             0x10 => {
                 let ids = (self.data[1], self.data[2]);
                 match ids {
@@ -182,7 +183,7 @@ impl<'buf> Text<'buf> {
             0x13 => TextEncoding::GB2312_1980,
             0x14 => TextEncoding::Big5,
             0x15 => TextEncoding::UTF8,
-            0x16...0x1E => TextEncoding::Reserved1(id),
+            0x16..=0x1E => TextEncoding::Reserved1(id),
             0x1F => unimplemented!("encoding_type_id"),
             _ => unreachable!(),
         }
@@ -192,7 +193,7 @@ impl<'buf> Text<'buf> {
     }
     fn enc_prefix_len(&self) -> Result<usize, TextError> {
         match self.data[0] {
-            0x01...0x0f | 0x11...0x1e => Ok(1),
+            0x01..=0x0f | 0x11..=0x1e => Ok(1),
             0x1f => Ok(2), // encoding_type_id in second byte
             0x10 => {
                 if self.data.len() < 3 {
@@ -204,7 +205,7 @@ impl<'buf> Text<'buf> {
                     Ok(3)
                 }
             }
-            0x20...0xff => Ok(0),
+            0x20..=0xff => Ok(0),
             _ => unreachable!(),
         }
     }
@@ -265,7 +266,7 @@ impl<'buf> Text<'buf> {
     }
 }
 impl<'buf> fmt::Debug for Text<'buf> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         fmt::Debug::fmt(&self.to_string(encoding::DecoderTrap::Replace), f)
     }
 }

@@ -1,3 +1,4 @@
+//! _Service Description Table_ section data
 use crate::ActualOther;
 use crate::Text;
 use mpeg2ts_reader::{demultiplex, descriptor, packet, psi};
@@ -55,7 +56,7 @@ impl ServiceType {
             0x0f => ServiceType::RcsFls,
             0x10 => ServiceType::DvbMhp,
             0x11 => ServiceType::Mpeg2HdDigitalTelevision,
-            0x12...0x15 => ServiceType::Reserved(id),
+            0x12..=0x15 => ServiceType::Reserved(id),
             0x16 => ServiceType::H264AvcSdDigitalTelevision,
             0x17 => ServiceType::H264AvcSdNvodTimeShifted,
             0x18 => ServiceType::H264AvcSdNvodReference,
@@ -66,8 +67,8 @@ impl ServiceType {
             0x1d => ServiceType::H264AvcFrameCompatiblePlanoStereoscopicHdNvodTimeShifted,
             0x1e => ServiceType::H264AvcFrameCompatiblePlanoStereoscopicHdNvodReference,
             0x1f => ServiceType::HevcDigitalTelevision,
-            0x20...0x7f => ServiceType::Reserved(id),
-            0x80...0xfe => ServiceType::UserDefined(id),
+            0x20..=0x7f => ServiceType::Reserved(id),
+            0x80..=0xfe => ServiceType::UserDefined(id),
             0xff => ServiceType::Reserved(id),
             _ => unreachable!(),
         }
@@ -118,7 +119,7 @@ impl<'buf> ServiceDescriptor<'buf> {
     }
 }
 impl<'buf> fmt::Debug for ServiceDescriptor<'buf> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("ServiceDescriptor")
             .field("service_type", &self.service_type())
             .field("service_provider_name", &self.service_provider_name())
@@ -146,7 +147,7 @@ impl RunningStatus {
             3 => RunningStatus::Pausing,
             4 => RunningStatus::Running,
             5 => RunningStatus::ServiceOffAir,
-            6...7 => RunningStatus::Reserved(id),
+            6..=7 => RunningStatus::Reserved(id),
             _ => panic!(
                 "Invalid running_status value {} (must be between 0 and 7)",
                 id
@@ -198,14 +199,14 @@ struct DescriptorsDebug<'buf, Desc: descriptor::Descriptor<'buf>>(
 impl<'buf, Desc: descriptor::Descriptor<'buf> + fmt::Debug> fmt::Debug
     for DescriptorsDebug<'buf, Desc>
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_list()
             .entries(self.0.descriptors::<Desc>())
             .finish()
     }
 }
 impl<'buf> fmt::Debug for Service<'buf> {
-    fn fmt<'a>(&'a self, f: &'a mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt<'a>(&'a self, f: &'a mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("Service")
             .field("service_id", &self.service_id())
             .field("eit_schedule_flag", &self.eit_schedule_flag())
@@ -217,7 +218,7 @@ impl<'buf> fmt::Debug for Service<'buf> {
             .field("free_ca_mode", &self.free_ca_mode())
             .field(
                 "descriptors",
-                &DescriptorsDebug::<'a, super::En300_468Descriptors>(self, marker::PhantomData),
+                &DescriptorsDebug::<'a, super::En300_468Descriptors<'a>>(self, marker::PhantomData),
             )
             .finish()
     }
@@ -252,7 +253,7 @@ impl<'buf> Iterator for ServiceIterator<'buf> {
 }
 struct ServicesDebug<'buf>(&'buf SdtSection<'buf>);
 impl<'buf> fmt::Debug for ServicesDebug<'buf> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_list().entries(self.0.services()).finish()
     }
 }
@@ -274,12 +275,12 @@ impl<'buf> SdtSection<'buf> {
     pub fn original_network_id(&self) -> u16 {
         u16::from(self.data[0]) << 8 | u16::from(self.data[1])
     }
-    pub fn services(&self) -> impl Iterator<Item = Service> {
+    pub fn services(&self) -> impl Iterator<Item = Service<'_>> {
         ServiceIterator::new(&self.data[3..])
     }
 }
 impl<'buf> fmt::Debug for SdtSection<'buf> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("SdtSection")
             .field("original_network_id", &self.original_network_id())
             .field("services", &ServicesDebug(self))
@@ -317,13 +318,13 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> demultiplex::PacketFilter
 {
     type Ctx = Ctx;
 
-    fn consume(&mut self, ctx: &mut Self::Ctx, pk: &packet::Packet) {
+    fn consume(&mut self, ctx: &mut Self::Ctx, pk: &packet::Packet<'_>) {
         self.sdt_section_packet_consumer.consume(ctx, pk);
     }
 }
 
 pub trait SdtConsumer {
-    fn consume(&mut self, sect: ActualOther<&SdtSection>);
+    fn consume(&mut self, sect: ActualOther<&SdtSection<'_>>);
 }
 
 pub struct SdtProcessor<Ctx: demultiplex::DemuxContext, C: SdtConsumer> {
@@ -349,7 +350,7 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayl
         &mut self,
         _ctx: &mut Self::Context,
         header: &psi::SectionCommonHeader,
-        _table_syntax_header: &psi::TableSyntaxHeader,
+        _table_syntax_header: &psi::TableSyntaxHeader<'_>,
         data: &'a [u8],
     ) {
         let start = psi::SectionCommonHeader::SIZE + psi::TableSyntaxHeader::SIZE;
@@ -385,7 +386,7 @@ mod test {
     impl demultiplex::StreamConstructor for NullStreamConstructor {
         type F = NullFilterSwitch;
 
-        fn construct(&mut self, req: demultiplex::FilterRequest) -> Self::F {
+        fn construct(&mut self, req: demultiplex::FilterRequest<'_, '_>) -> Self::F {
             match req {
                 demultiplex::FilterRequest::ByPid(packet::Pid::PAT) => {
                     NullFilterSwitch::Pat(demultiplex::PatPacketFilter::default())
@@ -412,7 +413,7 @@ mod test {
 
     struct AssertConsumer;
     impl SdtConsumer for AssertConsumer {
-        fn consume(&mut self, sdt: ActualOther<&SdtSection>) {
+        fn consume(&mut self, sdt: ActualOther<&SdtSection<'_>>) {
             let sdt = sdt.actual().unwrap();
             assert_eq!(9018, sdt.original_network_id());
             let mut i = sdt.services();
