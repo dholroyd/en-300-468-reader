@@ -337,29 +337,6 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> SdtProcessor<Ctx, C> {
             phantom: marker::PhantomData,
         }
     }
-
-    fn new_table(
-        &mut self,
-        _ctx: &mut Ctx,
-        header: &psi::SectionCommonHeader,
-        table_syntax_header: &psi::TableSyntaxHeader,
-        sect: &SdtSection,
-    ) {
-        if 0x42 != header.table_id {
-            log::warn!(
-                "Expected SDT to have table id 0x42, but got {:#x} (original_network_id={})",
-                header.table_id,
-                sect.original_network_id()
-            );
-            return;
-        }
-        log::warn!(
-            "New SDT: original_network_id={} table_header={:?}",
-            sect.original_network_id(),
-            table_syntax_header
-        );
-        self.consumer.consume(sect);
-    }
 }
 
 impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayloadParser
@@ -369,19 +346,22 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayl
 
     fn section<'a>(
         &mut self,
-        ctx: &mut Self::Context,
+        _ctx: &mut Self::Context,
         header: &psi::SectionCommonHeader,
-        table_syntax_header: &psi::TableSyntaxHeader,
+        _table_syntax_header: &psi::TableSyntaxHeader,
         data: &'a [u8],
     ) {
         let start = psi::SectionCommonHeader::SIZE + psi::TableSyntaxHeader::SIZE;
         let end = data.len() - 4; // remove CRC bytes
-        self.new_table(
-            ctx,
-            header,
-            table_syntax_header,
-            &SdtSection::new(&data[start..end]),
-        );
+        let sect = SdtSection::new(&data[start..end]);
+        match header.table_id {
+            0x42 => self.consumer.consume(&sect),
+            _ => log::warn!(
+                "Expected SDT to have table id 0x42, but got {:#x} (original_network_id={})",
+                header.table_id,
+                sect.original_network_id()
+            ),
+        }
     }
 }
 
