@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod sdt;
 
 use mpeg2ts_reader::descriptor::UnknownDescriptor;
