@@ -3,7 +3,9 @@ name = "en-300-468-reader"
 version = "0.1.0"
 authors = ["David Holroyd <dave@badgers-in-foil.co.uk>"]
 description = "Reader for MPEG TS data formatted according to ETSI standard EN 300 486"
+categories = [ "multimedia::video", "parser-implementations" ]
 repository = "https://github.com/dholroyd/en-300-468-reader"
+readme = "README.md"
 edition = "2018"
 
 [dependencies]
