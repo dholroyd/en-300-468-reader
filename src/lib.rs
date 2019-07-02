@@ -142,7 +142,7 @@ pub struct Text<'buf> {
 }
 impl<'buf> Text<'buf> {
     pub fn new(data: &'buf [u8]) -> Result<Text<'buf>, TextError> {
-        if data.len() == 0 {
+        if data.is_empty() {
             Err(TextError::NotEnoughData {
                 expected: 1,
                 available: 0,
@@ -226,42 +226,42 @@ impl<'buf> Text<'buf> {
         match enc {
             TextEncoding::Iso88591 => encoding::all::ISO_8859_1
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88592 => encoding::all::ISO_8859_2
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88593 => encoding::all::ISO_8859_3
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88594 => encoding::all::ISO_8859_4
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88595 => encoding::all::ISO_8859_5
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88596 => encoding::all::ISO_8859_6
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88597 => encoding::all::ISO_8859_7
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88598 => encoding::all::ISO_8859_8
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso88599 => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Iso885910 => encoding::all::ISO_8859_10
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso885911 => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Iso885913 => encoding::all::ISO_8859_13
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso885914 => encoding::all::ISO_8859_14
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Iso885915 => encoding::all::ISO_8859_15
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::Reserved1(..) => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Reserved2(..) => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Iso10646 => Err(TextError::UnsupportedEncoding(enc)),
@@ -269,10 +269,10 @@ impl<'buf> Text<'buf> {
             TextEncoding::GB2312_1980 => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Big5 => encoding::all::BIG5_2003
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
             TextEncoding::UTF8 => encoding::all::UTF_8
                 .decode(self.buffer()?, trap)
-                .map_err(|e| TextError::DecodeFailure(e)),
+                .map_err(TextError::DecodeFailure),
         }
     }
 }

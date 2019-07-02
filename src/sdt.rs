@@ -245,8 +245,7 @@ impl<'buf> Iterator for ServiceIterator<'buf> {
             let size = 5 + descriptors_loop_length;
             let (head, tail) = self.remaining_data.split_at(size as usize);
             self.remaining_data = tail;
-            let result = Some(Service::new(head));
-            result
+            Some(Service::new(head))
         }
     }
 }
