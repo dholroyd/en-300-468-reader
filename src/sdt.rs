@@ -70,7 +70,6 @@ impl ServiceType {
             0x20..=0x7f => ServiceType::Reserved(id),
             0x80..=0xfe => ServiceType::UserDefined(id),
             0xff => ServiceType::Reserved(id),
-            _ => unreachable!(),
         }
     }
 }
