@@ -381,12 +381,9 @@ mod test {
             Nul: demultiplex::NullPacketFilter<NullDemuxContext>,
         }
     }
-    mpeg2ts_reader::demux_context!(NullDemuxContext, NullStreamConstructor);
-    pub struct NullStreamConstructor;
-    impl demultiplex::StreamConstructor for NullStreamConstructor {
-        type F = NullFilterSwitch;
-
-        fn construct(&mut self, req: demultiplex::FilterRequest<'_, '_>) -> Self::F {
+    mpeg2ts_reader::demux_context!(NullDemuxContext, NullFilterSwitch);
+    impl NullDemuxContext {
+        fn do_construct(&mut self, req: demultiplex::FilterRequest<'_, '_>) -> NullFilterSwitch {
             match req {
                 demultiplex::FilterRequest::ByPid(packet::Pid::PAT) => {
                     NullFilterSwitch::Pat(demultiplex::PatPacketFilter::default())
@@ -428,7 +425,7 @@ mod test {
 
     #[test]
     fn it_works() {
-        let mut ctx = NullDemuxContext::new(NullStreamConstructor);
+        let mut ctx = NullDemuxContext::new();
         let mut processor = SdtProcessor::new(AssertConsumer);
         let section = vec![
             // common header

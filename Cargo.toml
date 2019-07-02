@@ -7,6 +7,6 @@ repository = "https://github.com/dholroyd/en-300-468-reader"
 edition = "2018"
 
 [dependencies]
-mpeg2ts-reader = "0.8"
+mpeg2ts-reader = "0.13"
 encoding = "0.2"
 log = "0.4"
