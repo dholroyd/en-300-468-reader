@@ -6,6 +6,7 @@ description = "Reader for MPEG TS data formatted according to ETSI standard EN 3
 categories = [ "multimedia::video", "parser-implementations" ]
 repository = "https://github.com/dholroyd/en-300-468-reader"
 readme = "README.md"
+license = "MIT/Apache-2.0"
 edition = "2018"
 
 [dependencies]
