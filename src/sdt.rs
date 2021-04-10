@@ -5,6 +5,8 @@ use mpeg2ts_reader::{demultiplex, descriptor, packet, psi};
 use std::fmt;
 use std::marker;
 
+pub const SDT_PID: packet::Pid = packet::Pid::new(0x11);
+
 #[derive(Debug)]
 pub enum ServiceType {
     Reserved(u8),
@@ -369,8 +371,8 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayl
 #[cfg(test)]
 mod test {
     use super::*;
+    use mpeg2ts_reader::psi;
     use mpeg2ts_reader::psi::WholeSectionSyntaxPayloadParser;
-    use mpeg2ts_reader::{packet, psi};
 
     mpeg2ts_reader::packet_filter_switch! {
         NullFilterSwitch<NullDemuxContext> {
@@ -383,7 +385,7 @@ mod test {
     impl NullDemuxContext {
         fn do_construct(&mut self, req: demultiplex::FilterRequest<'_, '_>) -> NullFilterSwitch {
             match req {
-                demultiplex::FilterRequest::ByPid(packet::Pid::PAT) => {
+                demultiplex::FilterRequest::ByPid(psi::pat::PAT_PID) => {
                     NullFilterSwitch::Pat(demultiplex::PatPacketFilter::default())
                 }
                 demultiplex::FilterRequest::ByPid(_) => {
