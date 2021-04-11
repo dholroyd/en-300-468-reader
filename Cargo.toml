@@ -1,6 +1,6 @@
 [package]
 name = "en-300-468-reader"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["David Holroyd <dave@badgers-in-foil.co.uk>"]
 description = "Reader for MPEG TS data formatted according to ETSI standard EN 300 486"
 categories = [ "multimedia::video", "parser-implementations" ]
