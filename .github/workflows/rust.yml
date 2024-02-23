@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@1.76.0
     - name: Build
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@1.76.0
         with:
