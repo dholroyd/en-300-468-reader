@@ -11,5 +11,5 @@ edition = "2021"
 
 [dependencies]
 mpeg2ts-reader = "0.18.2"
-encoding = "0.2"
+encoding_rs = "0.8"
 log = "0.4"

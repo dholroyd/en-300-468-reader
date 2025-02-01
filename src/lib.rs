@@ -8,7 +8,6 @@ pub mod sdt;
 use mpeg2ts_reader::descriptor::UnknownDescriptor;
 
 use crate::sdt::ServiceDescriptor;
-use encoding::Encoding;
 use std::borrow::Cow;
 use std::fmt;
 
@@ -170,7 +169,7 @@ impl<T> ActualOther<T> {
 #[derive(Debug)]
 pub enum TextError {
     NotEnoughData { expected: usize, available: usize },
-    DecodeFailure(Cow<'static, str>),
+    DecodeFailure,
     UnsupportedEncoding(TextEncoding),
 }
 
@@ -260,63 +259,116 @@ impl<'buf> Text<'buf> {
         }
     }
 
-    pub fn to_string(&self, trap: encoding::types::DecoderTrap) -> Result<String, TextError> {
+    pub fn to_string(&self) -> Result<Cow<'_, str>, TextError> {
         let enc = self.encoding();
         match enc {
-            TextEncoding::Iso88591 => encoding::all::ISO_8859_1
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88592 => encoding::all::ISO_8859_2
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88593 => encoding::all::ISO_8859_3
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88594 => encoding::all::ISO_8859_4
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88595 => encoding::all::ISO_8859_5
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88596 => encoding::all::ISO_8859_6
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88597 => encoding::all::ISO_8859_7
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso88598 => encoding::all::ISO_8859_8
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
+            TextEncoding::Iso88591 => Ok(encoding_rs::mem::decode_latin1(self.buffer()?)),
+            TextEncoding::Iso88592 => encoding_rs::ISO_8859_2
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88593 => encoding_rs::ISO_8859_3
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88594 => encoding_rs::ISO_8859_4
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88595 => encoding_rs::ISO_8859_5
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88596 => encoding_rs::ISO_8859_6
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88597 => encoding_rs::ISO_8859_7
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso88598 => encoding_rs::ISO_8859_8
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
             TextEncoding::Iso88599 => Err(TextError::UnsupportedEncoding(enc)),
-            TextEncoding::Iso885910 => encoding::all::ISO_8859_10
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
+            TextEncoding::Iso885910 => encoding_rs::ISO_8859_10
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
             TextEncoding::Iso885911 => Err(TextError::UnsupportedEncoding(enc)),
-            TextEncoding::Iso885913 => encoding::all::ISO_8859_13
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso885914 => encoding::all::ISO_8859_14
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::Iso885915 => encoding::all::ISO_8859_15
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
+            TextEncoding::Iso885913 => encoding_rs::ISO_8859_13
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso885914 => encoding_rs::ISO_8859_14
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::Iso885915 => encoding_rs::ISO_8859_15
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
             TextEncoding::Reserved1(..) => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Reserved2(..) => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::Iso10646 => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::KSX1001_2004 => Err(TextError::UnsupportedEncoding(enc)),
             TextEncoding::GB2312_1980 => Err(TextError::UnsupportedEncoding(enc)),
-            TextEncoding::Big5 => encoding::all::BIG5_2003
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
-            TextEncoding::UTF8 => encoding::all::UTF_8
-                .decode(self.buffer()?, trap)
-                .map_err(TextError::DecodeFailure),
+            TextEncoding::Big5 => encoding_rs::BIG5
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+            TextEncoding::UTF8 => encoding_rs::UTF_8
+                .decode_without_bom_handling_and_without_replacement(self.buffer()?)
+                .ok_or(TextError::DecodeFailure),
+        }
+    }
+
+    /// Returns the string with any un-decodable entries replaced with the *Unicode Replacement
+    /// Character*
+    pub fn to_string_with_replacement(&self) -> Result<Cow<'_, str>, TextError> {
+        let enc = self.encoding();
+        match enc {
+            TextEncoding::Iso88591 => Ok(encoding_rs::mem::decode_latin1(self.buffer()?)),
+            TextEncoding::Iso88592 => Ok(encoding_rs::ISO_8859_2
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88593 => Ok(encoding_rs::ISO_8859_3
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88594 => Ok(encoding_rs::ISO_8859_4
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88595 => Ok(encoding_rs::ISO_8859_5
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88596 => Ok(encoding_rs::ISO_8859_6
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88597 => Ok(encoding_rs::ISO_8859_7
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88598 => Ok(encoding_rs::ISO_8859_8
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso88599 => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::Iso885910 => Ok(encoding_rs::ISO_8859_10
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso885911 => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::Iso885913 => Ok(encoding_rs::ISO_8859_13
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso885914 => Ok(encoding_rs::ISO_8859_14
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Iso885915 => Ok(encoding_rs::ISO_8859_15
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::Reserved1(..) => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::Reserved2(..) => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::Iso10646 => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::KSX1001_2004 => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::GB2312_1980 => Err(TextError::UnsupportedEncoding(enc)),
+            TextEncoding::Big5 => Ok(encoding_rs::BIG5
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
+            TextEncoding::UTF8 => Ok(encoding_rs::UTF_8
+                .decode_without_bom_handling(self.buffer()?)
+                .0),
         }
     }
 }
 impl<'buf> fmt::Debug for Text<'buf> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        fmt::Debug::fmt(&self.to_string(encoding::DecoderTrap::Replace), f)
+        fmt::Debug::fmt(&self.to_string_with_replacement(), f)
     }
 }
