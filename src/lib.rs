@@ -4,10 +4,12 @@
 #![deny(rust_2018_idioms, future_incompatible)]
 
 pub mod sdt;
+pub mod short_event;
 
 use mpeg2ts_reader::descriptor::UnknownDescriptor;
 
 use crate::sdt::ServiceDescriptor;
+use crate::short_event::ShortEventDescriptor;
 use std::borrow::Cow;
 use std::fmt;
 
@@ -63,7 +65,7 @@ mpeg2ts_reader::descriptor_enum! {
         Linkage 0x4A => UnknownDescriptor,
         NvodReference 0x4B => UnknownDescriptor,
         TimeShiftedService 0x4C => UnknownDescriptor,
-        ShortEvent 0x4D => UnknownDescriptor,
+        ShortEvent ShortEventDescriptor::TAG => ShortEventDescriptor,
         ExtendedEvent 0x4E => UnknownDescriptor,
         TimeShiftedEvent 0x4F => UnknownDescriptor,
         Component 0x50 => UnknownDescriptor,
