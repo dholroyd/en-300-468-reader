@@ -288,16 +288,18 @@ impl<'buf> fmt::Debug for SdtSection<'buf> {
     }
 }
 
-pub struct SdtPacketFilter<Ctx: demultiplex::DemuxContext, C: SdtConsumer> {
-    sdt_section_packet_consumer: psi::SectionPacketConsumer<
-        psi::SectionSyntaxSectionProcessor<
-            psi::DedupSectionSyntaxPayloadParser<
-                psi::BufferSectionSyntaxParser<
-                    psi::CrcCheckWholeSectionSyntaxPayloadParser<SdtProcessor<Ctx, C>>,
-                >,
+type SdtSectionPacketConsumer<Ctx, C> = psi::SectionPacketConsumer<
+    psi::SectionSyntaxSectionProcessor<
+        psi::DedupSectionSyntaxPayloadParser<
+            psi::BufferSectionSyntaxParser<
+                psi::CrcCheckWholeSectionSyntaxPayloadParser<SdtProcessor<Ctx, C>>,
             >,
         >,
     >,
+>;
+
+pub struct SdtPacketFilter<Ctx: demultiplex::DemuxContext, C: SdtConsumer> {
+    sdt_section_packet_consumer: SdtSectionPacketConsumer<Ctx, C>,
 }
 impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> SdtPacketFilter<Ctx, C> {
     pub fn new(consumer: C) -> SdtPacketFilter<Ctx, C> {
@@ -346,12 +348,12 @@ impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> psi::WholeSectionSyntaxPayl
 {
     type Context = Ctx;
 
-    fn section<'a>(
+    fn section(
         &mut self,
         _ctx: &mut Self::Context,
         header: &psi::SectionCommonHeader,
         _table_syntax_header: &psi::TableSyntaxHeader<'_>,
-        data: &'a [u8],
+        data: &[u8],
     ) {
         let start = psi::SectionCommonHeader::SIZE + psi::TableSyntaxHeader::SIZE;
         let end = data.len() - 4; // remove CRC bytes
