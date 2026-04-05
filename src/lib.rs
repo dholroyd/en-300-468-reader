@@ -191,6 +191,27 @@ impl<'buf> Text<'buf> {
             Ok(Text { data })
         }
     }
+    /// Read a length-prefixed text field: the first byte of `data` is the
+    /// length, followed by that many bytes of text content.
+    /// Returns the Text and the total bytes consumed (1 + length).
+    pub fn read(data: &'buf [u8]) -> Result<(Text<'buf>, usize), TextError> {
+        if data.is_empty() {
+            return Err(TextError::NotEnoughData {
+                expected: 1,
+                available: 0,
+            });
+        }
+        let length = data[0] as usize;
+        let end = 1 + length;
+        if end > data.len() {
+            return Err(TextError::NotEnoughData {
+                expected: end,
+                available: data.len(),
+            });
+        }
+        let text = Text::new(&data[1..end])?;
+        Ok((text, end))
+    }
     pub fn encoding(&self) -> TextEncoding {
         let id = self.data[0];
         match id {
@@ -372,5 +393,79 @@ impl<'buf> Text<'buf> {
 impl<'buf> fmt::Debug for Text<'buf> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         fmt::Debug::fmt(&self.to_string_with_replacement(), f)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn read_empty_data() {
+        assert!(matches!(
+            Text::read(&[]),
+            Err(TextError::NotEnoughData {
+                expected: 1,
+                available: 0
+            })
+        ));
+    }
+
+    #[test]
+    fn read_zero_length() {
+        assert!(matches!(
+            Text::read(&[0x00]),
+            Err(TextError::NotEnoughData {
+                expected: 1,
+                available: 0
+            })
+        ));
+    }
+
+    #[test]
+    fn read_length_exceeds_data() {
+        assert!(matches!(
+            Text::read(&[0x05, b'A', b'B']),
+            Err(TextError::NotEnoughData {
+                expected: 6,
+                available: 3
+            })
+        ));
+    }
+
+    #[test]
+    fn read_iso8859_1_text() {
+        // Default encoding (first byte >= 0x20) is ISO 8859-1
+        let data = [0x03, b'A', b'B', b'C'];
+        let (text, consumed) = Text::read(&data).unwrap();
+        assert_eq!(consumed, 4);
+        assert_eq!(text.to_string().unwrap().as_ref(), "ABC");
+    }
+
+    #[test]
+    fn read_utf8_text() {
+        // 0x15 = UTF-8 encoding prefix
+        let data = [0x04, 0x15, b'H', b'i', b'!'];
+        let (text, consumed) = Text::read(&data).unwrap();
+        assert_eq!(consumed, 5);
+        assert_eq!(text.to_string().unwrap().as_ref(), "Hi!");
+    }
+
+    #[test]
+    fn read_ignores_trailing_data() {
+        let data = [0x02, b'O', b'K', 0xFF, 0xFF];
+        let (text, consumed) = Text::read(&data).unwrap();
+        assert_eq!(consumed, 3);
+        assert_eq!(text.to_string().unwrap().as_ref(), "OK");
+    }
+
+    #[test]
+    fn read_consecutive_fields() {
+        let data = [0x02, b'A', b'B', 0x03, b'X', b'Y', b'Z'];
+        let (first, consumed) = Text::read(&data).unwrap();
+        let (second, consumed2) = Text::read(&data[consumed..]).unwrap();
+        assert_eq!(first.to_string().unwrap().as_ref(), "AB");
+        assert_eq!(second.to_string().unwrap().as_ref(), "XYZ");
+        assert_eq!(consumed + consumed2, data.len());
     }
 }

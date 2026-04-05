@@ -32,43 +32,15 @@ impl<'buf> ShortEventDescriptor<'buf> {
 
     /// The name of the event
     pub fn event_name(&self) -> Result<Text<'buf>, super::TextError> {
-        let event_name_length = self.data[3] as usize;
-        let end = 4 + event_name_length;
-        if end > self.data.len() {
-            Err(super::TextError::NotEnoughData {
-                expected: end,
-                available: self.data.len(),
-            })
-        } else if event_name_length == 0 {
-            Err(super::TextError::NotEnoughData {
-                expected: 1,
-                available: 0,
-            })
-        } else {
-            Text::new(&self.data[4..end])
-        }
+        let (text, _) = Text::read(&self.data[3..])?;
+        Ok(text)
     }
 
     /// A short description of the event
     pub fn text(&self) -> Result<Text<'buf>, super::TextError> {
-        let event_name_length = self.data[3] as usize;
-        let text_length_offset = 4 + event_name_length;
-        let text_length = self.data[text_length_offset] as usize;
-        let start = text_length_offset + 1;
-        let end = start + text_length;
-        if end > self.data.len() {
-            Err(super::TextError::NotEnoughData {
-                expected: end,
-                available: self.data.len(),
-            })
-        } else if text_length == 0 {
-            Err(super::TextError::NotEnoughData {
-                expected: 1,
-                available: 0,
-            })
-        } else {
-            Text::new(&self.data[start..end])
-        }
+        let (_, consumed) = Text::read(&self.data[3..])?;
+        let (text, _) = Text::read(&self.data[3 + consumed..])?;
+        Ok(text)
     }
 }
 impl<'buf> fmt::Debug for ShortEventDescriptor<'buf> {

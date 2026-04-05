@@ -93,30 +93,13 @@ impl<'buf> ServiceDescriptor<'buf> {
         ServiceType::from_id(self.data[0])
     }
     pub fn service_provider_name(&self) -> Result<Text<'buf>, super::TextError> {
-        let service_provider_name_length = self.data[1] as usize;
-        let end = 2 + service_provider_name_length;
-        if end > self.data.len() {
-            Err(super::TextError::NotEnoughData {
-                expected: end,
-                available: self.data.len(),
-            })
-        } else {
-            Text::new(&self.data[2..end])
-        }
+        let (text, _) = Text::read(&self.data[1..])?;
+        Ok(text)
     }
     pub fn service_name(&self) -> Result<Text<'buf>, super::TextError> {
-        let service_provider_name_length = self.data[1] as usize;
-        let start = 2 + service_provider_name_length;
-        let service_name_length = self.data[start] as usize;
-        let end = 1 + start + service_name_length;
-        if end > self.data.len() {
-            Err(super::TextError::NotEnoughData {
-                expected: end,
-                available: self.data.len(),
-            })
-        } else {
-            Text::new(&self.data[1 + start..end])
-        }
+        let (_, consumed) = Text::read(&self.data[1..])?;
+        let (text, _) = Text::read(&self.data[1 + consumed..])?;
+        Ok(text)
     }
 }
 impl<'buf> fmt::Debug for ServiceDescriptor<'buf> {
