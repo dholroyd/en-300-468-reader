@@ -96,6 +96,6 @@ mod test {
 
         let desc = ShortEventDescriptor::new(0x4D, &data).unwrap();
         assert_eq!(desc.language_code_str(), Some("fra"));
-        assert!(desc.text().is_err());
+        assert_eq!(desc.text().unwrap().to_string().unwrap(), "");
     }
 }

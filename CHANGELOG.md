@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+ - Initial EIT table support, exposing previous/following data (not the full EPG yet)
+ - Implemented support for Short Event Descriptor
+
 ### Changed
  - Removed the dependency on the unmaintained `encoding` create and switched to `encoding_rs`. See
    [RUSTSEC-2021-0153](https://rustsec.org/advisories/RUSTSEC-2021-0153).

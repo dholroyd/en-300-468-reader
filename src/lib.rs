@@ -3,6 +3,8 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, future_incompatible)]
 
+pub mod eit;
+mod huffman;
 pub mod sdt;
 pub mod short_event;
 
@@ -138,6 +140,8 @@ pub enum TextEncoding {
     Big5,
     /// UTF-8,
     UTF8,
+    /// Described by encoding_type_id (character table byte 0x1F followed by encoding_type_id)
+    EncodingTypeId(u8),
 }
 
 /// There are several pieces of metadata in the spec that may apply to the 'actual' transport
@@ -182,14 +186,7 @@ pub struct Text<'buf> {
 }
 impl<'buf> Text<'buf> {
     pub fn new(data: &'buf [u8]) -> Result<Text<'buf>, TextError> {
-        if data.is_empty() {
-            Err(TextError::NotEnoughData {
-                expected: 1,
-                available: 0,
-            })
-        } else {
-            Ok(Text { data })
-        }
+        Ok(Text { data })
     }
     /// Read a length-prefixed text field: the first byte of `data` is the
     /// length, followed by that many bytes of text content.
@@ -256,7 +253,7 @@ impl<'buf> Text<'buf> {
             0x14 => TextEncoding::Big5,
             0x15 => TextEncoding::UTF8,
             0x16..=0x1E => TextEncoding::Reserved1(id),
-            0x1F => unimplemented!("encoding_type_id"),
+            0x1F => TextEncoding::EncodingTypeId(self.data[1]),
             _ => unreachable!(),
         }
     }
@@ -283,6 +280,9 @@ impl<'buf> Text<'buf> {
     }
 
     pub fn to_string(&self) -> Result<Cow<'_, str>, TextError> {
+        if self.data.is_empty() {
+            return Ok(Cow::Borrowed(""));
+        }
         let enc = self.encoding();
         match enc {
             TextEncoding::Iso88591 => Ok(encoding_rs::mem::decode_latin1(self.buffer()?)),
@@ -332,12 +332,23 @@ impl<'buf> Text<'buf> {
             TextEncoding::UTF8 => encoding_rs::UTF_8
                 .decode_without_bom_handling_and_without_replacement(self.buffer()?)
                 .ok_or(TextError::DecodeFailure),
+            // encoding_type_id per TS 101 162 - values are a DVB Project Office registry.
+            // 0x01–0x02 registered by BBC: Huffman-compressed text (Freesat/Freeview).
+            TextEncoding::EncodingTypeId(id @ (1 | 2)) => {
+                crate::huffman::decode(id, &self.data[2..])
+                    .map(|bytes| Cow::Owned(encoding_rs::mem::decode_latin1(&bytes).into_owned()))
+                    .ok_or(TextError::DecodeFailure)
+            }
+            TextEncoding::EncodingTypeId(_) => Err(TextError::UnsupportedEncoding(enc)),
         }
     }
 
     /// Returns the string with any un-decodable entries replaced with the *Unicode Replacement
     /// Character*
     pub fn to_string_with_replacement(&self) -> Result<Cow<'_, str>, TextError> {
+        if self.data.is_empty() {
+            return Ok(Cow::Borrowed(""));
+        }
         let enc = self.encoding();
         match enc {
             TextEncoding::Iso88591 => Ok(encoding_rs::mem::decode_latin1(self.buffer()?)),
@@ -387,6 +398,12 @@ impl<'buf> Text<'buf> {
             TextEncoding::UTF8 => Ok(encoding_rs::UTF_8
                 .decode_without_bom_handling(self.buffer()?)
                 .0),
+            TextEncoding::EncodingTypeId(id @ (1 | 2)) => {
+                crate::huffman::decode(id, &self.data[2..])
+                    .map(|bytes| Cow::Owned(encoding_rs::mem::decode_latin1(&bytes).into_owned()))
+                    .ok_or(TextError::DecodeFailure)
+            }
+            TextEncoding::EncodingTypeId(_) => Err(TextError::UnsupportedEncoding(enc)),
         }
     }
 }
@@ -413,13 +430,9 @@ mod test {
 
     #[test]
     fn read_zero_length() {
-        assert!(matches!(
-            Text::read(&[0x00]),
-            Err(TextError::NotEnoughData {
-                expected: 1,
-                available: 0
-            })
-        ));
+        let (text, consumed) = Text::read(&[0x00]).unwrap();
+        assert_eq!(consumed, 1);
+        assert_eq!(text.to_string().unwrap(), "");
     }
 
     #[test]
