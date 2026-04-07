@@ -178,5 +178,5 @@ fn main() {
     writeln!(code).unwrap();
     write_array_u16(&mut code, "TRIE_ROOTS_2", &roots2);
 
-    fs::write(&out_path, code).unwrap();
+    fs::write(out_path, code).unwrap();
 }
