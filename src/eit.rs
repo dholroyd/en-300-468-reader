@@ -385,13 +385,9 @@ impl<'buf> fmt::Debug for EitSection<'buf> {
     }
 }
 
-type EitSectionPacketConsumer<Ctx, C> = psi::SectionPacketConsumer<
-    psi::SectionSyntaxSectionProcessor<
-        psi::DedupSectionSyntaxPayloadParser<
-            psi::BufferSectionSyntaxParser<
-                psi::CrcCheckWholeSectionSyntaxPayloadParser<EitProcessor<Ctx, C>>,
-            >,
-        >,
+type EitSectionPacketConsumer<Ctx, C> = psi::SectionSyntaxFramer<
+    psi::DedupSectionSyntaxPayloadParser<
+        psi::CrcCheckWholeSectionSyntaxPayloadParser<EitProcessor<Ctx, C>>,
     >,
 >;
 
@@ -399,15 +395,14 @@ pub struct EitPacketFilter<Ctx: demultiplex::DemuxContext, C: EitConsumer> {
     eit_section_packet_consumer: EitSectionPacketConsumer<Ctx, C>,
 }
 impl<Ctx: demultiplex::DemuxContext, C: EitConsumer> EitPacketFilter<Ctx, C> {
-    pub fn new(consumer: C) -> EitPacketFilter<Ctx, C> {
+    pub fn new(pid: packet::Pid, consumer: C) -> EitPacketFilter<Ctx, C> {
         let proc = EitProcessor::new(consumer);
         EitPacketFilter {
-            eit_section_packet_consumer: psi::SectionPacketConsumer::new(
-                psi::SectionSyntaxSectionProcessor::new(psi::DedupSectionSyntaxPayloadParser::new(
-                    psi::BufferSectionSyntaxParser::new(
-                        psi::CrcCheckWholeSectionSyntaxPayloadParser::new(proc),
-                    ),
-                )),
+            eit_section_packet_consumer: psi::SectionSyntaxFramer::new(
+                pid,
+                psi::DedupSectionSyntaxPayloadParser::new(
+                    psi::CrcCheckWholeSectionSyntaxPayloadParser::new(pid, proc),
+                ),
             ),
         }
     }

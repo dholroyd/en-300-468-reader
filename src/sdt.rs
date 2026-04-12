@@ -271,13 +271,9 @@ impl<'buf> fmt::Debug for SdtSection<'buf> {
     }
 }
 
-type SdtSectionPacketConsumer<Ctx, C> = psi::SectionPacketConsumer<
-    psi::SectionSyntaxSectionProcessor<
-        psi::DedupSectionSyntaxPayloadParser<
-            psi::BufferSectionSyntaxParser<
-                psi::CrcCheckWholeSectionSyntaxPayloadParser<SdtProcessor<Ctx, C>>,
-            >,
-        >,
+type SdtSectionPacketConsumer<Ctx, C> = psi::SectionSyntaxFramer<
+    psi::DedupSectionSyntaxPayloadParser<
+        psi::CrcCheckWholeSectionSyntaxPayloadParser<SdtProcessor<Ctx, C>>,
     >,
 >;
 
@@ -286,14 +282,13 @@ pub struct SdtPacketFilter<Ctx: demultiplex::DemuxContext, C: SdtConsumer> {
 }
 impl<Ctx: demultiplex::DemuxContext, C: SdtConsumer> SdtPacketFilter<Ctx, C> {
     pub fn new(consumer: C) -> SdtPacketFilter<Ctx, C> {
-        let pat_proc = SdtProcessor::new(consumer);
+        let sdt_proc = SdtProcessor::new(consumer);
         SdtPacketFilter {
-            sdt_section_packet_consumer: psi::SectionPacketConsumer::new(
-                psi::SectionSyntaxSectionProcessor::new(psi::DedupSectionSyntaxPayloadParser::new(
-                    psi::BufferSectionSyntaxParser::new(
-                        psi::CrcCheckWholeSectionSyntaxPayloadParser::new(pat_proc),
-                    ),
-                )),
+            sdt_section_packet_consumer: psi::SectionSyntaxFramer::new(
+                SDT_PID,
+                psi::DedupSectionSyntaxPayloadParser::new(
+                    psi::CrcCheckWholeSectionSyntaxPayloadParser::new(SDT_PID, sdt_proc),
+                ),
             ),
         }
     }

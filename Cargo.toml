@@ -10,6 +10,6 @@ license = "MIT/Apache-2.0"
 edition = "2021"
 
 [dependencies]
-mpeg2ts-reader = "0.18.2"
+mpeg2ts-reader = { git = "https://github.com/dholroyd/mpeg2ts-reader.git", rev = "7bf01e05d2e4197f726e0db825c8349028ca7cc4" }
 encoding_rs = "0.8"
 log = "0.4"
