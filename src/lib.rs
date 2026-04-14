@@ -7,6 +7,8 @@ pub mod eit;
 mod huffman;
 pub mod sdt;
 pub mod short_event;
+pub mod tdt;
+pub mod time;
 
 use mpeg2ts_reader::descriptor::UnknownDescriptor;
 
